@@ -2,7 +2,7 @@ use anyhow::Result;
 use gray_matter::{Matter, Pod, engine::YAML};
 use std::{fs, path::Path};
 
-use crate::types::Frontmatter;
+use crate::types::{Frontmatter, Templates};
 
 pub fn show_help() {
     println!("\n  Kuro - Static Site Generator");
@@ -31,7 +31,7 @@ pub fn copy_dir(src: &Path, dest: &Path) -> Result<()> {
 }
 
 pub fn md_to_html(input: &str) -> String {
-    use comrak::{markdown_to_html, Options};
+    use comrak::{Options, markdown_to_html};
 
     let mut options = Options::default();
 
@@ -58,7 +58,34 @@ pub fn parse_content(input: &str) -> Result<(Option<Frontmatter>, String)> {
     Ok((data, result.content))
 }
 
-pub fn render_page(input: &str) -> anyhow::Result<String> {
+pub fn render_page(input: &str, templates: &Templates) -> anyhow::Result<String> {
+    let (fm, content) = crate::utils::parse_content(input)?;
+
+    let html_content = md_to_html(&content);
+
+    let title = fm.as_ref().map(|f| f.title.as_str()).unwrap_or("Untitled");
+
+    // page.html only needs content
+    let body = templates.page.replace("{content}", &html_content);
+
+    // header
+    let header = templates
+        .header
+        .replace("{title}", title)
+        .replace("{date}", "");
+
+    // final composition
+    let full = templates
+        .base
+        .replace("{title}", title)
+        .replace("{header}", &header)
+        .replace("{content}", &body)
+        .replace("{footer}", &templates.footer);
+
+    Ok(full)
+}
+
+pub fn render_post(input: &str, templates: &Templates) -> anyhow::Result<String> {
     let (fm, content) = crate::utils::parse_content(input)?;
 
     let html_content = md_to_html(&content);
@@ -71,30 +98,24 @@ pub fn render_page(input: &str) -> anyhow::Result<String> {
         .map(|d| format!(r#"<p class="date">{}</p>"#, d))
         .unwrap_or_default();
 
-    Ok(format!(
-        r#"<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="utf-8">
-  <title>{}</title>
-  <link rel="stylesheet" href="/reset.css">
-  <link rel="stylesheet" href="/index.css">
-</head>
-<body>
-<main>
-<header>
-  <h1>{}</h1>
-  {}
-</header>
+    // post.html includes title + date + content
+    let body = templates
+        .post
+        .replace("{title}", title)
+        .replace("{date}", &date_html)
+        .replace("{content}", &html_content);
 
-<article>
-{}
-</article>
+    let header = templates
+        .header
+        .replace("{title}", title)
+        .replace("{date}", &date_html);
 
-</main>
-<script src="/index.js"></script>
-</body>
-</html>"#,
-        title, title, date_html, html_content
-    ))
+    let full = templates
+        .base
+        .replace("{title}", title)
+        .replace("{header}", &header)
+        .replace("{content}", &body)
+        .replace("{footer}", &templates.footer);
+
+    Ok(full)
 }

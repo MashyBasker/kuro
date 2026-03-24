@@ -3,9 +3,12 @@ use std::{fs, path::Path};
 use tiny_http::{Response, Server};
 
 use crate::{
-    scaffold::{DEFAULT_KURO_YAML, FIRST_POST_MD, INDEX_CSS, INDEX_JS, INDEX_MD, RESET_CSS},
-    types::Project,
-    utils::{copy_dir, render_page},
+    scaffold::{
+        BASE_HTML, DEFAULT_KURO_YAML, FIRST_POST_MD, FOOTER_HTML, HEADER_HTML, INDEX_CSS, INDEX_JS,
+        INDEX_MD, PAGE_HTML, POST_HTML, RESET_CSS,
+    },
+    types::{Project, Templates},
+    utils::{copy_dir, render_page, render_post},
 };
 
 pub fn create_site_directory(root_path: &Path) -> Result<Project> {
@@ -19,10 +22,17 @@ pub fn create_site_directory(root_path: &Path) -> Result<Project> {
     let writings_dir = project.source_dir.join("writings");
     fs::create_dir_all(&writings_dir)?;
     println!("  ✓ Writings directory generated");
+
     fs::create_dir_all(&project.assets_dir)?;
     println!("  ✓ Site theme assets generated");
+
     fs::create_dir_all(&project.out_dir)?;
     println!("  ✓ Site output directory created");
+
+    let templates_dir = &project.template_dir;
+
+    fs::create_dir_all(templates_dir)?;
+    println!("  ✓ Templated directory created");
 
     fs::write(project.root.join("kuro.yml"), DEFAULT_KURO_YAML)?;
     println!("  ✓ Kuro config file generated");
@@ -38,6 +48,13 @@ pub fn create_site_directory(root_path: &Path) -> Result<Project> {
     fs::write(project.assets_dir.join("index.js"), INDEX_JS)?;
     println!("  ✓ Site theme assets written\n");
 
+    fs::write(templates_dir.join("base.html"), BASE_HTML)?;
+    fs::write(templates_dir.join("header.html"), HEADER_HTML)?;
+    fs::write(templates_dir.join("footer.html"), FOOTER_HTML)?;
+    fs::write(templates_dir.join("page.html"), PAGE_HTML)?;
+    fs::write(templates_dir.join("post.html"), POST_HTML)?;
+    println!("✓ Created templates");
+
     Ok(project)
 }
 
@@ -50,11 +67,14 @@ pub fn build_site(project: &Project) -> Result<()> {
 
     copy_dir(&project.assets_dir, &project.out_dir)?;
 
+    let templates = Templates::load(&project.root)?;
+    println!("  ✓ Loaded templates");
+
     let index_md = project.source_dir.join("index.md");
     let index_html = project.out_dir.join("index.html");
 
     let content = fs::read_to_string(index_md)?;
-    let html = render_page(&content)?;
+    let html = render_page(&content, &templates)?;
 
     fs::write(index_html, html)?;
 
@@ -70,7 +90,7 @@ pub fn build_site(project: &Project) -> Result<()> {
 
         if path.extension().and_then(|s| s.to_str()) == Some("md") {
             let content = fs::read_to_string(&path)?;
-            let html = render_page(&content)?;
+            let html = render_post(&content, &templates)?;
 
             let file_name = path.file_stem().unwrap().to_str().unwrap();
             let output_path = writings_dst.join(format!("{}.html", file_name));

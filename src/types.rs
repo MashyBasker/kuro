@@ -1,5 +1,9 @@
+use anyhow::Result;
 use serde::Deserialize;
-use std::path::PathBuf;
+use std::{
+    fs,
+    path::{Path, PathBuf},
+};
 
 #[derive(Debug, PartialEq)]
 pub struct Project {
@@ -8,6 +12,14 @@ pub struct Project {
     pub out_dir: PathBuf,
     pub assets_dir: PathBuf,
     pub template_dir: PathBuf,
+}
+
+pub struct Templates {
+    pub base: String,
+    pub header: String,
+    pub footer: String,
+    pub page: String,
+    pub post: String,
 }
 
 impl Project {
@@ -19,6 +31,20 @@ impl Project {
             template_dir: root.join("templates"),
             root,
         }
+    }
+}
+
+impl Templates {
+    pub fn load(path: &Path) -> Result<Self> {
+        let t = path.join("templates");
+
+        Ok(Self {
+            base: fs::read_to_string(t.join("base.html"))?,
+            header: fs::read_to_string(t.join("header.html"))?,
+            footer: fs::read_to_string(t.join("footer.html"))?,
+            page: fs::read_to_string(t.join("page.html"))?,
+            post: fs::read_to_string(t.join("post.html"))?,
+        })
     }
 }
 
