@@ -80,8 +80,7 @@ pub fn create_new_file(project: &Project, name: &str, post: bool) -> Result<()> 
     let path = dir.join(format!("{}.md", name));
 
     if path.exists() {
-        println!("\n  ✗ File already exists: {}\n", path.display());
-        return Ok(());
+        return Err(anyhow!("file already exists: {}", path.display()));
     }
 
     let today = Local::now().format("%Y-%m-%d").to_string();
