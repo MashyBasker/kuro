@@ -1,8 +1,16 @@
 use anyhow::{Result, anyhow};
 use chrono::Local;
+use notify::{RecursiveMode, Watcher};
 use serde_json;
-use std::{fs, path::Path};
-use tiny_http::{Response, Server};
+use std::{
+    fs,
+    path::Path,
+    sync::{
+        Arc,
+        atomic::{AtomicU64, Ordering},
+    },
+};
+use tiny_http::{Header, Response, Server};
 
 use crate::{
     scaffold::{
@@ -85,6 +93,10 @@ pub fn create_new_file(project: &Project, name: &str, post: bool) -> Result<()> 
 }
 
 pub fn build_site(project: &Project) -> Result<()> {
+    build_site_inner(project, false)
+}
+
+fn build_site_inner(project: &Project, silent: bool) -> Result<()> {
     // clean dist if it exists
     if project.out_dir.exists() {
         fs::remove_dir_all(&project.out_dir)?;
@@ -94,7 +106,7 @@ pub fn build_site(project: &Project) -> Result<()> {
     copy_dir(&project.assets_dir, &project.out_dir)?;
 
     let mut templates = Templates::load(&project.root)?;
-    println!("\n  ✓ Loaded templates");
+    if !silent { println!("\n  ✓ Loaded templates"); }
 
     // Scan non-index pages in content/ to build the navbar
     let mut page_entries: Vec<_> = fs::read_dir(&project.source_dir)?
@@ -180,44 +192,110 @@ pub fn build_site(project: &Project) -> Result<()> {
     let writings_index_html = render_writings(&posts, &templates)?;
     fs::write(writings_dst.join("index.html"), writings_index_html)?;
 
-    println!("\n  ✓ Built writings\n");
+    if !silent { println!("\n  ✓ Built writings\n"); }
 
     Ok(())
 }
 
-pub fn serve(project: &Project) -> Result<()> {
-    // 1. Build first
+const RELOAD_SCRIPT: &str = r#"<script>
+(function(){
+  var v=null;
+  setInterval(async function(){
+    try{
+      var r=await fetch('/_kuro_reload');
+      var d=await r.json();
+      if(v===null)v=d.version;
+      else if(d.version!==v)location.reload();
+    }catch(e){}
+  },500);
+})();
+</script>"#;
+
+pub fn serve(project: &Project, watch: bool) -> Result<()> {
     build_site(project)?;
     println!("  ✓ Site built");
 
+    let reload_version = Arc::new(AtomicU64::new(0));
+
+    if watch {
+        let version = reload_version.clone();
+        let proj = project.clone();
+        std::thread::spawn(move || {
+            let (tx, rx) = std::sync::mpsc::channel();
+            let mut watcher =
+                notify::recommended_watcher(move |res: notify::Result<notify::Event>| {
+                    tx.send(res).ok();
+                })
+                .expect("watcher");
+            watcher.watch(&proj.source_dir, RecursiveMode::Recursive).ok();
+            watcher.watch(&proj.assets_dir, RecursiveMode::Recursive).ok();
+            watcher.watch(&proj.template_dir, RecursiveMode::Recursive).ok();
+
+            loop {
+                match rx.recv() {
+                    Ok(Ok(event)) if !event.kind.is_access() => {
+                        // debounce: drain any queued events
+                        std::thread::sleep(std::time::Duration::from_millis(50));
+                        while rx.try_recv().is_ok() {}
+
+                        let t = std::time::Instant::now();
+                        match build_site_inner(&proj, true) {
+                            Ok(_) => {
+                                version.fetch_add(1, Ordering::SeqCst);
+                                println!("  ✓ Rebuilt in {}ms", t.elapsed().as_millis());
+                            }
+                            Err(e) => eprintln!("  ✗ Build error: {e}"),
+                        }
+                    }
+                    Err(_) => break,
+                    _ => {}
+                }
+            }
+        });
+        println!("  ✓ Watching for changes");
+    }
+
     let addr = "127.0.0.1:3000";
     let server = Server::http(addr).map_err(|e| anyhow!(e))?;
-
     println!("  ✓ Serving at localhost:3000");
 
+    let json_ct: Header = "Content-Type: application/json".parse().unwrap();
+    let html_ct: Header = "Content-Type: text/html; charset=utf-8".parse().unwrap();
+
     for request in server.incoming_requests() {
-        let url = request.url();
+        let url = request.url().to_string();
+
+        if watch && url == "/_kuro_reload" {
+            let v = reload_version.load(Ordering::SeqCst);
+            let body = format!("{{\"version\":{v}}}");
+            request.respond(Response::from_string(body).with_header(json_ct.clone()))?;
+            continue;
+        }
 
         let path = if url == "/" {
             project.out_dir.join("index.html")
         } else {
-            // strip leading '/'
             let trimmed = url.trim_start_matches('/');
             project.out_dir.join(trimmed)
         };
 
-        let path = if path.is_dir() {
-            path.join("index.html")
-        } else {
-            path
-        };
+        let path = if path.is_dir() { path.join("index.html") } else { path };
 
-        let response = match fs::read(&path) {
-            Ok(data) => Response::from_data(data),
-            Err(_) => Response::from_string("404 Not Found").with_status_code(404),
-        };
+        let is_html = path.extension().and_then(|e| e.to_str()) == Some("html");
 
-        request.respond(response)?;
+        match fs::read(&path) {
+            Ok(data) if watch && is_html => {
+                let mut html = String::from_utf8_lossy(&data).into_owned();
+                html = html.replace("</body>", &format!("{RELOAD_SCRIPT}</body>"));
+                request.respond(Response::from_string(html).with_header(html_ct.clone()))?;
+            }
+            Ok(data) => {
+                request.respond(Response::from_data(data))?;
+            }
+            Err(_) => {
+                request.respond(Response::from_string("404 Not Found").with_status_code(404))?;
+            }
+        }
     }
 
     Ok(())

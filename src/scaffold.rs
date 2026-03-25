@@ -63,7 +63,9 @@ pub const BASE_HTML: &str = r#"
 
 <script src="/index.js"></script>
 <script src="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/highlight.min.js"></script>
-<script>hljs.highlightAll();</script>
+<script src="https://cdn.jsdelivr.net/npm/highlightjs-zig/dist/zig.min.js"></script>
+<script src="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/languages/x86asm.min.js"></script>
+<script>hljs.registerAliases(['asm', 'nasm'], {languageName: 'x86asm'}); hljs.highlightAll();</script>
 <script>
   document.querySelectorAll('nav a').forEach(function(link) {
     var href = link.getAttribute('href');

@@ -31,9 +31,9 @@ fn main() {
         Some(Commands::Init(path)) => {
             let _ = core::create_site_directory(Path::new(&path));
         }
-        Some(Commands::Serve(path)) => {
+        Some(Commands::Serve { path, watch }) => {
             let project = Project::new(Path::new(&path).to_path_buf());
-            let _ = core::serve(&project);
+            let _ = core::serve(&project, watch);
         }
         Some(Commands::New { name, post }) => {
             let project = Project::new(Path::new(".").to_path_buf());
