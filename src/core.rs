@@ -9,7 +9,7 @@ use crate::{
         INDEX_MD, PAGE_HTML, POST_HTML, RESET_CSS, WRITINGS_HTML,
     },
     types::{PostMeta, Project, Templates},
-    utils::{copy_dir, render_page, render_post, render_writings},
+    utils::{build_header_html, copy_dir, render_page, render_post, render_writings},
 };
 
 pub fn create_site_directory(root_path: &Path) -> Result<Project> {
@@ -47,7 +47,7 @@ pub fn create_site_directory(root_path: &Path) -> Result<Project> {
     fs::write(project.assets_dir.join("index.css"), INDEX_CSS)?;
     fs::write(project.assets_dir.join("reset.css"), RESET_CSS)?;
     fs::write(project.assets_dir.join("index.js"), INDEX_JS)?;
-    println!("  ✓ Site theme assets written\n");
+    println!("  ✓ Site theme assets written");
 
     fs::write(templates_dir.join("base.html"), BASE_HTML)?;
     fs::write(templates_dir.join("header.html"), HEADER_HTML)?;
@@ -55,7 +55,7 @@ pub fn create_site_directory(root_path: &Path) -> Result<Project> {
     fs::write(templates_dir.join("page.html"), PAGE_HTML)?;
     fs::write(templates_dir.join("post.html"), POST_HTML)?;
     fs::write(templates_dir.join("writings.html"), WRITINGS_HTML)?;
-    println!("✓ Created templates");
+    println!("  ✓ Created templates\n");
 
     Ok(project)
 }
@@ -90,16 +90,54 @@ pub fn build_site(project: &Project) -> Result<()> {
 
     copy_dir(&project.assets_dir, &project.out_dir)?;
 
-    let templates = Templates::load(&project.root)?;
-    println!("  ✓ Loaded templates");
+    let mut templates = Templates::load(&project.root)?;
+    println!("\n  ✓ Loaded templates");
+
+    // Scan non-index pages in content/ to build the navbar
+    let mut page_entries: Vec<_> = fs::read_dir(&project.source_dir)?
+        .filter_map(|e| e.ok())
+        .filter(|e| {
+            let p = e.path();
+            p.extension().and_then(|s| s.to_str()) == Some("md")
+                && p.file_stem().and_then(|s| s.to_str()) != Some("index")
+        })
+        .collect();
+    page_entries.sort_by_key(|e| e.file_name());
+
+    let extra_pages: Vec<(String, String)> = page_entries
+        .iter()
+        .map(|e| {
+            let path = e.path();
+            let name = path.file_stem().unwrap().to_str().unwrap().to_string();
+            let content = fs::read_to_string(&path).unwrap_or_default();
+            let title = crate::utils::parse_content(&content)
+                .ok()
+                .and_then(|(fm, _)| fm)
+                .map(|f| f.title)
+                .unwrap_or_else(|| name.clone());
+            (title, format!("/{}/", name))
+        })
+        .collect();
+
+    templates.header = build_header_html(&extra_pages);
 
     let index_md = project.source_dir.join("index.md");
     let index_html = project.out_dir.join("index.html");
 
     let content = fs::read_to_string(index_md)?;
     let html = render_page(&content, &templates)?;
-
     fs::write(index_html, html)?;
+
+    // Build extra pages to dist/{name}/index.html
+    for entry in &page_entries {
+        let path = entry.path();
+        let name = path.file_stem().unwrap().to_str().unwrap();
+        let content = fs::read_to_string(&path)?;
+        let html = render_page(&content, &templates)?;
+        let page_dir = project.out_dir.join(name);
+        fs::create_dir_all(&page_dir)?;
+        fs::write(page_dir.join("index.html"), html)?;
+    }
 
     // 4. Build writings/
     let writings_src = project.source_dir.join("writings");

@@ -58,6 +58,15 @@ pub fn parse_content(input: &str) -> Result<(Option<Frontmatter>, String)> {
     Ok((data, result.content))
 }
 
+pub fn build_header_html(extra_pages: &[(String, String)]) -> String {
+    let mut links = String::from("    <a href=\"/\">Home</a>");
+    for (title, url) in extra_pages {
+        links.push_str(&format!("\n    <a href=\"{}\">{}</a>", url, title));
+    }
+    links.push_str("\n    <a href=\"/writings/\">Writings</a>");
+    format!("\n<header>\n  <nav>\n{}\n  </nav>\n</header>\n", links)
+}
+
 pub fn render_page(input: &str, templates: &Templates) -> anyhow::Result<String> {
     let (fm, content) = crate::utils::parse_content(input)?;
 
