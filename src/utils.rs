@@ -68,17 +68,11 @@ pub fn render_page(input: &str, templates: &Templates) -> anyhow::Result<String>
     // page.html only needs content
     let body = templates.page.replace("{content}", &html_content);
 
-    // header
-    let header = templates
-        .header
-        .replace("{title}", title)
-        .replace("{date}", "");
-
     // final composition
     let full = templates
         .base
         .replace("{title}", title)
-        .replace("{header}", &header)
+        .replace("{header}", &templates.header)
         .replace("{content}", &body)
         .replace("{footer}", &templates.footer);
 
@@ -105,15 +99,10 @@ pub fn render_post(input: &str, templates: &Templates) -> anyhow::Result<String>
         .replace("{date}", &date_html)
         .replace("{content}", &html_content);
 
-    let header = templates
-        .header
-        .replace("{title}", title)
-        .replace("{date}", &date_html);
-
     let full = templates
         .base
         .replace("{title}", title)
-        .replace("{header}", &header)
+        .replace("{header}", &templates.header)
         .replace("{content}", &body)
         .replace("{footer}", &templates.footer);
 

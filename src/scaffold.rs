@@ -6,8 +6,8 @@ url: "http://localhost:3000"
 "#;
 
 pub const INDEX_MD: &str = r#"---
-title = "Index"
-date = ~
+title: "Index"
+date:
 ---
 
 Welcome to my site.
@@ -20,8 +20,8 @@ This is my personal website powered by **kuro**.
 "#;
 
 pub const FIRST_POST_MD: &str = r#"---
-title = "First Post"
-date = ~
+title: "First Post"
+date:
 ---
 
 Hello friend.
@@ -40,6 +40,11 @@ pub const BASE_HTML: &str = r#"
   <title>{title}</title>
   <link rel="stylesheet" href="/reset.css">
   <link rel="stylesheet" href="/index.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css">
+  <style>
+    body { display: flex; flex-direction: column; min-height: 100vh; }
+    main { flex: 1; }
+  </style>
 </head>
 <body>
 
@@ -52,14 +57,21 @@ pub const BASE_HTML: &str = r#"
 {footer}
 
 <script src="/index.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js"
+  onload="renderMathInElement(document.body, {
+    delimiters: [
+      {left: '$$', right: '$$', display: true},
+      {left: '$', right: '$', display: false}
+    ]
+  })">
+</script>
 </body>
 </html>
 "#;
 
 pub const HEADER_HTML: &str = r#"
 <header>
-  <h1>{title}</h1>
-  {date}
   <nav>
     <a href="/">Home</a>
     <a href="/writings/">Writings</a>
