@@ -19,18 +19,12 @@ This is my personal website powered by **kuro**.
 - [First Post](/writings/first-post.html)
 "#;
 
-pub const FIRST_POST_MD: &str = r#"---
-title: "First Post"
-date:
----
-
-Hello friend.
-
-## Section
-
-- item one
-- item two
-"#;
+pub fn first_post_md(date: &str) -> String {
+    format!(
+        "---\ntitle: \"First Post\"\ndate: \"{}\"\n---\n\nHello friend.\n\n## Section\n\n- item one\n- item two\n",
+        date
+    )
+}
 
 pub const BASE_HTML: &str = r#"
 <!DOCTYPE html>
@@ -50,6 +44,11 @@ pub const BASE_HTML: &str = r#"
     nav { display: flex; gap: 2ch; margin: 0; }
     nav a { margin: 0; text-decoration: none; }
     nav a.active { text-decoration: underline; text-decoration-thickness: var(--border-thickness); }
+    .post-cards { display: flex; flex-direction: column; gap: var(--line-height); margin: 0; padding: 0; }
+    .post-card { display: flex; flex-direction: column; gap: calc(var(--line-height) / 2); border: var(--border-thickness) solid var(--text-color); padding: calc(var(--line-height) - var(--border-thickness)) 1ch; text-decoration: none; margin: 0; }
+    .post-card:hover { background: var(--background-color-alt); }
+    .post-card-title { font-weight: var(--font-weight-bold); margin: 0; }
+    .post-card-date { color: var(--text-color-alt); margin: 0; font-size: 0.875rem; }
   </style>
 </head>
 <body>
@@ -116,12 +115,16 @@ pub const POST_HTML: &str = r#"
 </article>
 "#;
 
+pub const CARD_HTML: &str = r#"<a class="post-card" href="{url}">
+      <span class="post-card-title">{title}</span>{date}
+    </a>"#;
+
 pub const WRITINGS_HTML: &str = r#"
 <article>
   <h1>Writings</h1>
-  <ul>
+  <div class="post-cards">
     {posts}
-  </ul>
+  </div>
 </article>
 "#;
 

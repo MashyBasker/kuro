@@ -5,13 +5,27 @@ use std::{fs, path::Path};
 use crate::types::{Frontmatter, PostMeta, Templates};
 
 pub fn show_help() {
-    println!("\n  Kuro - Static Site Generator");
-    println!("");
-    println!("  Usage:");
-    println!("    kuro init [path]   Create a new site (default: current directory)");
-    println!("    kuro build [path]  Build the site (default: current directory)");
-    println!("    kuro -h, --help    Show this help");
-    println!("");
+    println!("\nkuro {}", env!("CARGO_PKG_VERSION"));
+    println!();
+    println!("USAGE:");
+    println!("    kuro <COMMAND> [OPTIONS]");
+    println!();
+    println!("COMMANDS:");
+    println!("    init [PATH]       Create a new site (default: current directory)");
+    println!("    build [PATH]      Build the site (default: current directory)");
+    println!("    serve [PATH]      Serve the site locally (default: current directory)");
+    println!("    new <NAME>        Create a new page");
+    println!();
+    println!("OPTIONS:");
+    println!("    --post            Create as a blog post (used with `new`)");
+    println!("    -h, --help        Print this help message");
+    println!();
+    println!("EXAMPLES:");
+    println!("    kuro init                  Create a new site in the current directory");
+    println!("    kuro init my-site          Create a new site in ./my-site");
+    println!("    kuro build                 Build the site");
+    println!("    kuro new about             Create a new page called 'about'");
+    println!("    kuro new my-post --post    Create a new blog post\n");
 }
 
 pub fn copy_dir(src: &Path, dest: &Path) -> Result<()> {
@@ -95,9 +109,12 @@ pub fn render_writings(posts: &[PostMeta], templates: &Templates) -> anyhow::Res
             let date = p
                 .date
                 .as_deref()
-                .map(|d| format!(" <span class=\"date\">{}</span>", d))
+                .map(|d| format!("\n      <span class=\"post-card-date\">{}</span>", d))
                 .unwrap_or_default();
-            format!("<li><a href=\"{}\">{}</a>{}</li>", p.url, p.title, date)
+            crate::scaffold::CARD_HTML
+                .replace("{url}", &p.url)
+                .replace("{title}", &p.title)
+                .replace("{date}", &date)
         })
         .collect::<Vec<_>>()
         .join("\n    ");

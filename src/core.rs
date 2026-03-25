@@ -1,12 +1,13 @@
 use anyhow::{Result, anyhow};
+use chrono::Local;
 use serde_json;
 use std::{fs, path::Path};
 use tiny_http::{Response, Server};
 
 use crate::{
     scaffold::{
-        BASE_HTML, DEFAULT_KURO_YAML, FIRST_POST_MD, FOOTER_HTML, HEADER_HTML, INDEX_CSS, INDEX_JS,
-        INDEX_MD, PAGE_HTML, POST_HTML, RESET_CSS, WRITINGS_HTML,
+        BASE_HTML, DEFAULT_KURO_YAML, FOOTER_HTML, HEADER_HTML, INDEX_CSS, INDEX_JS,
+        INDEX_MD, PAGE_HTML, POST_HTML, RESET_CSS, WRITINGS_HTML, first_post_md,
     },
     types::{PostMeta, Project, Templates},
     utils::{build_header_html, copy_dir, render_page, render_post, render_writings},
@@ -38,10 +39,11 @@ pub fn create_site_directory(root_path: &Path) -> Result<Project> {
     fs::write(project.root.join("kuro.yml"), DEFAULT_KURO_YAML)?;
     println!("  ✓ Kuro config file generated");
 
+    let today = Local::now().format("%Y-%m-%d").to_string();
     fs::write(project.source_dir.join("index.md"), INDEX_MD)?;
     fs::write(
         project.source_dir.join("writings/first-post.md"),
-        FIRST_POST_MD,
+        first_post_md(&today),
     )?;
 
     fs::write(project.assets_dir.join("index.css"), INDEX_CSS)?;
@@ -74,7 +76,8 @@ pub fn create_new_file(project: &Project, name: &str, post: bool) -> Result<()> 
         return Ok(());
     }
 
-    let content = format!("---\ntitle: \"{}\"\ndate:\n---\n\n", name);
+    let today = Local::now().format("%Y-%m-%d").to_string();
+    let content = format!("---\ntitle: \"{}\"\ndate: \"{}\"\n---\n\n", name, today);
     fs::write(&path, content)?;
     println!("\n  ✓ Created {}\n", path.display());
 
