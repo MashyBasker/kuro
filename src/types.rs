@@ -20,6 +20,7 @@ pub struct Templates {
     pub footer: String,
     pub page: String,
     pub post: String,
+    pub writings: String,
 }
 
 impl Project {
@@ -44,6 +45,7 @@ impl Templates {
             footer: fs::read_to_string(t.join("footer.html"))?,
             page: fs::read_to_string(t.join("page.html"))?,
             post: fs::read_to_string(t.join("post.html"))?,
+            writings: fs::read_to_string(t.join("writings.html"))?,
         })
     }
 }
@@ -52,4 +54,11 @@ impl Templates {
 pub struct Frontmatter {
     pub title: String,
     pub date: Option<String>,
+}
+
+#[derive(Debug, serde::Serialize)]
+pub struct PostMeta {
+    pub title: String,
+    pub date: Option<String>,
+    pub url: String,
 }

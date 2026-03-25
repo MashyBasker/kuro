@@ -41,9 +41,15 @@ pub const BASE_HTML: &str = r#"
   <link rel="stylesheet" href="/reset.css">
   <link rel="stylesheet" href="/index.css">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css">
+  <link rel="stylesheet" media="(prefers-color-scheme: light)" href="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/styles/base16/grayscale-light.min.css">
+  <link rel="stylesheet" media="(prefers-color-scheme: dark)" href="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/styles/base16/grayscale-dark.min.css">
   <style>
     body { display: flex; flex-direction: column; min-height: 100vh; }
     main { flex: 1; }
+    header { display: flex; justify-content: flex-end; align-items: center; margin-bottom: calc(var(--line-height) * 2); }
+    nav { display: flex; gap: 2ch; margin: 0; }
+    nav a { margin: 0; text-decoration: none; }
+    nav a.active { text-decoration: underline; text-decoration-thickness: var(--border-thickness); }
   </style>
 </head>
 <body>
@@ -57,6 +63,17 @@ pub const BASE_HTML: &str = r#"
 {footer}
 
 <script src="/index.js"></script>
+<script src="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/highlight.min.js"></script>
+<script>hljs.highlightAll();</script>
+<script>
+  document.querySelectorAll('nav a').forEach(function(link) {
+    var href = link.getAttribute('href');
+    var path = window.location.pathname;
+    if (href === '/' ? path === '/' : path.startsWith(href)) {
+      link.classList.add('active');
+    }
+  });
+</script>
 <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
 <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js"
   onload="renderMathInElement(document.body, {
@@ -96,6 +113,15 @@ pub const POST_HTML: &str = r#"
   <h1>{title}</h1>
   {date}
   {content}
+</article>
+"#;
+
+pub const WRITINGS_HTML: &str = r#"
+<article>
+  <h1>Writings</h1>
+  <ul>
+    {posts}
+  </ul>
 </article>
 "#;
 

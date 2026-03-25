@@ -35,6 +35,10 @@ fn main() {
             let project = Project::new(Path::new(&path).to_path_buf());
             let _ = core::serve(&project);
         }
+        Some(Commands::New { name, post }) => {
+            let project = Project::new(Path::new(".").to_path_buf());
+            let _ = core::create_new_file(&project, &name, post);
+        }
         None => utils::show_help(),
     }
 }

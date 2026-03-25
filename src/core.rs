@@ -1,14 +1,15 @@
 use anyhow::{Result, anyhow};
+use serde_json;
 use std::{fs, path::Path};
 use tiny_http::{Response, Server};
 
 use crate::{
     scaffold::{
         BASE_HTML, DEFAULT_KURO_YAML, FIRST_POST_MD, FOOTER_HTML, HEADER_HTML, INDEX_CSS, INDEX_JS,
-        INDEX_MD, PAGE_HTML, POST_HTML, RESET_CSS,
+        INDEX_MD, PAGE_HTML, POST_HTML, RESET_CSS, WRITINGS_HTML,
     },
-    types::{Project, Templates},
-    utils::{copy_dir, render_page, render_post},
+    types::{PostMeta, Project, Templates},
+    utils::{copy_dir, render_page, render_post, render_writings},
 };
 
 pub fn create_site_directory(root_path: &Path) -> Result<Project> {
@@ -53,9 +54,31 @@ pub fn create_site_directory(root_path: &Path) -> Result<Project> {
     fs::write(templates_dir.join("footer.html"), FOOTER_HTML)?;
     fs::write(templates_dir.join("page.html"), PAGE_HTML)?;
     fs::write(templates_dir.join("post.html"), POST_HTML)?;
+    fs::write(templates_dir.join("writings.html"), WRITINGS_HTML)?;
     println!("✓ Created templates");
 
     Ok(project)
+}
+
+pub fn create_new_file(project: &Project, name: &str, post: bool) -> Result<()> {
+    let dir = if post {
+        project.source_dir.join("writings")
+    } else {
+        project.source_dir.clone()
+    };
+
+    let path = dir.join(format!("{}.md", name));
+
+    if path.exists() {
+        println!("\n  ✗ File already exists: {}\n", path.display());
+        return Ok(());
+    }
+
+    let content = format!("---\ntitle: \"{}\"\ndate:\n---\n\n", name);
+    fs::write(&path, content)?;
+    println!("\n  ✓ Created {}\n", path.display());
+
+    Ok(())
 }
 
 pub fn build_site(project: &Project) -> Result<()> {
@@ -84,20 +107,37 @@ pub fn build_site(project: &Project) -> Result<()> {
 
     fs::create_dir_all(&writings_dst)?;
 
+    let mut posts: Vec<PostMeta> = Vec::new();
+
     for entry in fs::read_dir(writings_src)? {
         let entry = entry?;
         let path = entry.path();
 
         if path.extension().and_then(|s| s.to_str()) == Some("md") {
             let content = fs::read_to_string(&path)?;
+            let (fm, _) = crate::utils::parse_content(&content)?;
+
+            let file_name = path.file_stem().unwrap().to_str().unwrap().to_string();
             let html = render_post(&content, &templates)?;
-
-            let file_name = path.file_stem().unwrap().to_str().unwrap();
             let output_path = writings_dst.join(format!("{}.html", file_name));
-
             fs::write(output_path, html)?;
+
+            posts.push(PostMeta {
+                title: fm.as_ref().map(|f| f.title.clone()).unwrap_or_else(|| file_name.clone()),
+                date: fm.and_then(|f| f.date),
+                url: format!("/writings/{}.html", file_name),
+            });
         }
     }
+
+    // sort by date descending, undated posts last
+    posts.sort_by(|a, b| b.date.cmp(&a.date));
+
+    let json = serde_json::to_string_pretty(&posts)?;
+    fs::write(writings_dst.join("index.json"), &json)?;
+
+    let writings_index_html = render_writings(&posts, &templates)?;
+    fs::write(writings_dst.join("index.html"), writings_index_html)?;
 
     println!("\n  ✓ Built writings\n");
 

@@ -2,7 +2,7 @@ use anyhow::Result;
 use gray_matter::{Matter, Pod, engine::YAML};
 use std::{fs, path::Path};
 
-use crate::types::{Frontmatter, Templates};
+use crate::types::{Frontmatter, PostMeta, Templates};
 
 pub fn show_help() {
     println!("\n  Kuro - Static Site Generator");
@@ -72,6 +72,32 @@ pub fn render_page(input: &str, templates: &Templates) -> anyhow::Result<String>
     let full = templates
         .base
         .replace("{title}", title)
+        .replace("{header}", &templates.header)
+        .replace("{content}", &body)
+        .replace("{footer}", &templates.footer);
+
+    Ok(full)
+}
+
+pub fn render_writings(posts: &[PostMeta], templates: &Templates) -> anyhow::Result<String> {
+    let items: String = posts
+        .iter()
+        .map(|p| {
+            let date = p
+                .date
+                .as_deref()
+                .map(|d| format!(" <span class=\"date\">{}</span>", d))
+                .unwrap_or_default();
+            format!("<li><a href=\"{}\">{}</a>{}</li>", p.url, p.title, date)
+        })
+        .collect::<Vec<_>>()
+        .join("\n    ");
+
+    let body = templates.writings.replace("{posts}", &items);
+
+    let full = templates
+        .base
+        .replace("{title}", "Writings")
         .replace("{header}", &templates.header)
         .replace("{content}", &body)
         .replace("{footer}", &templates.footer);
