@@ -19,7 +19,10 @@ pub fn parse_command(args: Vec<String>) -> Option<Commands> {
         "init" => Some(Commands::Init(path.into())),
         "serve" => {
             let watch = rest.iter().any(|a| a == "--watch");
-            Some(Commands::Serve { path: path.into(), watch })
+            Some(Commands::Serve {
+                path: path.into(),
+                watch,
+            })
         }
         "new" => {
             let name = rest.get(0)?.to_string();

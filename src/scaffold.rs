@@ -99,7 +99,7 @@ pub const HEADER_HTML: &str = r#"
 
 pub const FOOTER_HTML: &str = r#"
 <footer>
-  <p>© 2026 My Site</p>
+  <p>{links}</p>
 </footer>
 "#;
 

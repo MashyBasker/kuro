@@ -2,7 +2,7 @@ use anyhow::Result;
 use gray_matter::{Matter, Pod, engine::YAML};
 use std::{fs, path::Path};
 
-use crate::types::{Frontmatter, PostMeta, Templates};
+use crate::types::{Config, Frontmatter, PostMeta, Templates};
 
 pub fn show_help() {
     println!("\nkuro {}", env!("CARGO_PKG_VERSION"));
@@ -81,7 +81,17 @@ pub fn build_header_html(extra_pages: &[(String, String)]) -> String {
     format!("\n<header>\n  <nav>\n{}\n  </nav>\n</header>\n", links)
 }
 
-pub fn render_page(input: &str, templates: &Templates) -> anyhow::Result<String> {
+pub fn update_footer(yaml_config: &str) -> String {
+    let config: Config = serde_yaml::from_str(yaml_config).unwrap();
+    config
+        .footer_link
+        .iter()
+        .map(|l| format!("<a href=\"{}\">{}</a>", l.url, l.label))
+        .collect::<Vec<_>>()
+        .join("\t")
+}
+
+pub fn render_page(input: &str, templates: &Templates, yaml_config: &str) -> anyhow::Result<String> {
     let (fm, content) = crate::utils::parse_content(input)?;
 
     let html_content = md_to_html(&content);
@@ -91,18 +101,21 @@ pub fn render_page(input: &str, templates: &Templates) -> anyhow::Result<String>
     // page.html only needs content
     let body = templates.page.replace("{content}", &html_content);
 
+    let footer_links = update_footer(yaml_config);
+    let footer_content = templates.footer.replace("{links}", &footer_links);
+
     // final composition
     let full = templates
         .base
         .replace("{title}", title)
         .replace("{header}", &templates.header)
         .replace("{content}", &body)
-        .replace("{footer}", &templates.footer);
+        .replace("{footer}", &footer_content);
 
     Ok(full)
 }
 
-pub fn render_writings(posts: &[PostMeta], templates: &Templates) -> anyhow::Result<String> {
+pub fn render_writings(posts: &[PostMeta], templates: &Templates, yaml_config: &str) -> anyhow::Result<String> {
     let items: String = posts
         .iter()
         .map(|p| {
@@ -119,6 +132,9 @@ pub fn render_writings(posts: &[PostMeta], templates: &Templates) -> anyhow::Res
         .collect::<Vec<_>>()
         .join("\n    ");
 
+    let footer_links = update_footer(yaml_config);
+    let footer_content = templates.footer.replace("{links}", &footer_links);
+
     let body = templates.writings.replace("{posts}", &items);
 
     let full = templates
@@ -126,17 +142,19 @@ pub fn render_writings(posts: &[PostMeta], templates: &Templates) -> anyhow::Res
         .replace("{title}", "Writings")
         .replace("{header}", &templates.header)
         .replace("{content}", &body)
-        .replace("{footer}", &templates.footer);
+        .replace("{footer}", &footer_content);
 
     Ok(full)
 }
 
-pub fn render_post(input: &str, templates: &Templates) -> anyhow::Result<String> {
+pub fn render_post(input: &str, templates: &Templates, yaml_config: &str) -> anyhow::Result<String> {
     let (fm, content) = crate::utils::parse_content(input)?;
 
     let html_content = md_to_html(&content);
 
     let title = fm.as_ref().map(|f| f.title.as_str()).unwrap_or("Untitled");
+    let footer_links = update_footer(yaml_config);
+    let footer_content = templates.footer.replace("{links}", &footer_links);
 
     let date_html = fm
         .as_ref()
@@ -156,7 +174,7 @@ pub fn render_post(input: &str, templates: &Templates) -> anyhow::Result<String>
         .replace("{title}", title)
         .replace("{header}", &templates.header)
         .replace("{content}", &body)
-        .replace("{footer}", &templates.footer);
+        .replace("{footer}", &footer_content);
 
     Ok(full)
 }

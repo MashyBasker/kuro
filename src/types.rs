@@ -62,3 +62,14 @@ pub struct PostMeta {
     pub date: Option<String>,
     pub url: String,
 }
+
+#[derive(Debug, Deserialize)]
+pub struct FooterLink {
+    pub label: String,
+    pub url: String,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct Config {
+    pub footer_link: Vec<FooterLink>,
+}

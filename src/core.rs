@@ -14,8 +14,8 @@ use tiny_http::{Header, Response, Server};
 
 use crate::{
     scaffold::{
-        BASE_HTML, DEFAULT_KURO_YAML, FOOTER_HTML, HEADER_HTML, INDEX_CSS, INDEX_JS,
-        INDEX_MD, PAGE_HTML, POST_HTML, RESET_CSS, WRITINGS_HTML, first_post_md,
+        BASE_HTML, DEFAULT_KURO_YAML, FOOTER_HTML, HEADER_HTML, INDEX_CSS, INDEX_JS, INDEX_MD,
+        PAGE_HTML, POST_HTML, RESET_CSS, WRITINGS_HTML, first_post_md,
     },
     types::{PostMeta, Project, Templates},
     utils::{build_header_html, copy_dir, render_page, render_post, render_writings},
@@ -103,9 +103,14 @@ fn build_site_inner(project: &Project, silent: bool) -> Result<()> {
     fs::create_dir_all(&project.out_dir)?;
 
     copy_dir(&project.assets_dir, &project.out_dir)?;
+    fs::write(project.out_dir.join("index.css"), INDEX_CSS)?;
+    fs::write(project.out_dir.join("reset.css"), RESET_CSS)?;
+    fs::write(project.out_dir.join("index.js"), INDEX_JS)?;
 
     let mut templates = Templates::load(&project.root)?;
-    if !silent { println!("\n  ✓ Loaded templates"); }
+    if !silent {
+        println!("\n  ✓ Loaded templates");
+    }
 
     // Scan non-index pages in content/ to build the navbar
     let mut page_entries: Vec<_> = fs::read_dir(&project.source_dir)?
@@ -137,9 +142,15 @@ fn build_site_inner(project: &Project, silent: bool) -> Result<()> {
 
     let index_md = project.source_dir.join("index.md");
     let index_html = project.out_dir.join("index.html");
+    let yaml_config_path = {
+        let p = project.root.join("kuro.yaml");
+        if p.exists() { p } else { project.root.join("kuro.yml") }
+    };
+
+    let yaml_config = fs::read_to_string(yaml_config_path)?;
 
     let content = fs::read_to_string(index_md)?;
-    let html = render_page(&content, &templates)?;
+    let html = render_page(&content, &templates, &yaml_config)?;
     fs::write(index_html, html)?;
 
     // Build extra pages to dist/{name}/index.html
@@ -147,7 +158,7 @@ fn build_site_inner(project: &Project, silent: bool) -> Result<()> {
         let path = entry.path();
         let name = path.file_stem().unwrap().to_str().unwrap();
         let content = fs::read_to_string(&path)?;
-        let html = render_page(&content, &templates)?;
+        let html = render_page(&content, &templates, &yaml_config)?;
         let page_dir = project.out_dir.join(name);
         fs::create_dir_all(&page_dir)?;
         fs::write(page_dir.join("index.html"), html)?;
@@ -170,12 +181,15 @@ fn build_site_inner(project: &Project, silent: bool) -> Result<()> {
             let (fm, _) = crate::utils::parse_content(&content)?;
 
             let file_name = path.file_stem().unwrap().to_str().unwrap().to_string();
-            let html = render_post(&content, &templates)?;
+            let html = render_post(&content, &templates, &yaml_config)?;
             let output_path = writings_dst.join(format!("{}.html", file_name));
             fs::write(output_path, html)?;
 
             posts.push(PostMeta {
-                title: fm.as_ref().map(|f| f.title.clone()).unwrap_or_else(|| file_name.clone()),
+                title: fm
+                    .as_ref()
+                    .map(|f| f.title.clone())
+                    .unwrap_or_else(|| file_name.clone()),
                 date: fm.and_then(|f| f.date),
                 url: format!("/writings/{}.html", file_name),
             });
@@ -188,10 +202,12 @@ fn build_site_inner(project: &Project, silent: bool) -> Result<()> {
     let json = serde_json::to_string_pretty(&posts)?;
     fs::write(writings_dst.join("index.json"), &json)?;
 
-    let writings_index_html = render_writings(&posts, &templates)?;
+    let writings_index_html = render_writings(&posts, &templates, &yaml_config)?;
     fs::write(writings_dst.join("index.html"), writings_index_html)?;
 
-    if !silent { println!("\n  ✓ Built writings\n"); }
+    if !silent {
+        println!("\n  ✓ Built writings\n");
+    }
 
     Ok(())
 }
@@ -226,9 +242,15 @@ pub fn serve(project: &Project, watch: bool) -> Result<()> {
                     tx.send(res).ok();
                 })
                 .expect("watcher");
-            watcher.watch(&proj.source_dir, RecursiveMode::Recursive).ok();
-            watcher.watch(&proj.assets_dir, RecursiveMode::Recursive).ok();
-            watcher.watch(&proj.template_dir, RecursiveMode::Recursive).ok();
+            watcher
+                .watch(&proj.source_dir, RecursiveMode::Recursive)
+                .ok();
+            watcher
+                .watch(&proj.assets_dir, RecursiveMode::Recursive)
+                .ok();
+            watcher
+                .watch(&proj.template_dir, RecursiveMode::Recursive)
+                .ok();
 
             loop {
                 match rx.recv() {
@@ -278,7 +300,11 @@ pub fn serve(project: &Project, watch: bool) -> Result<()> {
             project.out_dir.join(trimmed)
         };
 
-        let path = if path.is_dir() { path.join("index.html") } else { path };
+        let path = if path.is_dir() {
+            path.join("index.html")
+        } else {
+            path
+        };
 
         let is_html = path.extension().and_then(|e| e.to_str()) == Some("html");
 

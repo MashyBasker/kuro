@@ -28,9 +28,7 @@ fn main() {
             let project = Project::new(Path::new(&path).to_path_buf());
             core::build_site(&project)
         }
-        Some(Commands::Init(path)) => {
-            core::create_site_directory(Path::new(&path)).map(|_| ())
-        }
+        Some(Commands::Init(path)) => core::create_site_directory(Path::new(&path)).map(|_| ()),
         Some(Commands::Serve { path, watch }) => {
             let project = Project::new(Path::new(&path).to_path_buf());
             core::serve(&project, watch)
