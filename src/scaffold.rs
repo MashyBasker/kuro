@@ -91,8 +91,7 @@ pub const BASE_HTML: &str = r#"
 pub const HEADER_HTML: &str = r#"
 <header>
   <nav>
-    <a href="/">Home</a>
-    <a href="/writings/">Writings</a>
+    {links}
   </nav>
 </header>
 "#;

@@ -84,11 +84,21 @@ pub fn build_header_html(extra_pages: &[(String, String)]) -> String {
 pub fn update_footer(yaml_config: &str) -> String {
     let config: Config = serde_yaml::from_str(yaml_config).unwrap();
     config
-        .footer_link
+        .footer_links
         .iter()
         .map(|l| format!("<a href=\"{}\">{}</a>", l.url, l.label))
         .collect::<Vec<_>>()
         .join("\t")
+}
+
+pub fn get_site_path(yaml_config: &str) -> String {
+    let config: Config = serde_yaml::from_str(yaml_config).unwrap();
+    config
+        .site_paths
+        .iter()
+        .map(|sp| format!("<a href=\"{}\">{}</a>", sp.path, sp.label))
+        .collect::<Vec<_>>()
+        .join("\n")
 }
 
 pub fn render_page(input: &str, templates: &Templates, yaml_config: &str) -> anyhow::Result<String> {
@@ -104,11 +114,14 @@ pub fn render_page(input: &str, templates: &Templates, yaml_config: &str) -> any
     let footer_links = update_footer(yaml_config);
     let footer_content = templates.footer.replace("{links}", &footer_links);
 
+    let nav_bar = get_site_path(yaml_config);
+    let nvbar_contents = templates.header.replace("{links}", &nav_bar);
+
     // final composition
     let full = templates
         .base
         .replace("{title}", title)
-        .replace("{header}", &templates.header)
+        .replace("{header}", &nvbar_contents)
         .replace("{content}", &body)
         .replace("{footer}", &footer_content);
 
@@ -135,12 +148,15 @@ pub fn render_writings(posts: &[PostMeta], templates: &Templates, yaml_config: &
     let footer_links = update_footer(yaml_config);
     let footer_content = templates.footer.replace("{links}", &footer_links);
 
+    let nav_bar = get_site_path(yaml_config);
+    let nvbar_contents = templates.header.replace("{links}", &nav_bar);
+
     let body = templates.writings.replace("{posts}", &items);
 
     let full = templates
         .base
         .replace("{title}", "Writings")
-        .replace("{header}", &templates.header)
+        .replace("{header}", &nvbar_contents)
         .replace("{content}", &body)
         .replace("{footer}", &footer_content);
 
@@ -155,6 +171,9 @@ pub fn render_post(input: &str, templates: &Templates, yaml_config: &str) -> any
     let title = fm.as_ref().map(|f| f.title.as_str()).unwrap_or("Untitled");
     let footer_links = update_footer(yaml_config);
     let footer_content = templates.footer.replace("{links}", &footer_links);
+
+    let nav_bar = get_site_path(yaml_config);
+    let nvbar_contents = templates.header.replace("{links}", &nav_bar);
 
     let date_html = fm
         .as_ref()
@@ -172,7 +191,7 @@ pub fn render_post(input: &str, templates: &Templates, yaml_config: &str) -> any
     let full = templates
         .base
         .replace("{title}", title)
-        .replace("{header}", &templates.header)
+        .replace("{header}", &nvbar_contents)
         .replace("{content}", &body)
         .replace("{footer}", &footer_content);
 

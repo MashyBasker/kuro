@@ -70,6 +70,13 @@ pub struct FooterLink {
 }
 
 #[derive(Debug, Deserialize)]
+pub struct SitePaths {
+    pub label: String,
+    pub path: String,
+}
+
+#[derive(Debug, Deserialize)]
 pub struct Config {
-    pub footer_link: Vec<FooterLink>,
+    pub footer_links: Vec<FooterLink>,
+    pub site_paths: Vec<SitePaths>,
 }
