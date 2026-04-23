@@ -12,6 +12,7 @@
   --text-color-alt: #666;
   --background-color: #fff;
   --background-color-alt: #eee;
+  --background-color-code: #d4d4d4;
 
   --font-weight-normal: 500;
   --font-weight-medium: 600;
@@ -31,6 +32,7 @@
     --text-color-alt: #aaa;
     --background-color: #000;
     --background-color-alt: #111;
+    --background-color-code: #2a2a2a;
   }
 }
 
@@ -242,6 +244,13 @@ pre, code {
 
 code {
   font-weight: var(--font-weight-medium);
+}
+
+:not(pre) > code {
+  background: var(--background-color-code);
+  padding: 0.1em 0.5ch;
+  border-radius: 2px;
+  outline: 1px solid color-mix(in srgb, var(--text-color) 15%, transparent);
 }
 
 figure {
