@@ -13,13 +13,31 @@ use std::{
 use tiny_http::{Header, Response, Server};
 
 use crate::{
-    scaffold::{
-        BASE_HTML, DEFAULT_KURO_YAML, FOOTER_HTML, HEADER_HTML, INDEX_CSS, INDEX_JS, INDEX_MD,
-        PAGE_HTML, POST_HTML, RESET_CSS, WRITINGS_HTML, first_post_md,
-    },
     types::{PostMeta, Project, Templates},
     utils::{build_header_html, copy_dir, render_page, render_post, render_writings},
 };
+
+pub const DEFAULT_KURO_YAML: &str = include_str!("../assets/templates/kuro.yml");
+pub const INDEX_MD: &str = include_str!("../assets/templates/index.md");
+pub const BASE_HTML: &str = include_str!("../assets/templates/base.html");
+pub const HEADER_HTML: &str = include_str!("../assets/templates/header.html");
+pub const FOOTER_HTML: &str = include_str!("../assets/templates/footer.html");
+pub const PAGE_HTML: &str = include_str!("../assets/templates/page.html");
+pub const POST_HTML: &str = include_str!("../assets/templates/post.html");
+pub const CARD_HTML: &str = include_str!("../assets/templates/card.html");
+pub const WRITINGS_HTML: &str = include_str!("../assets/templates/writings.html");
+
+// These theme files are taken from owickstrom/the-monospace-web
+pub const INDEX_CSS: &str = include_str!("../assets/themes/index.css");
+pub const INDEX_JS: &str = include_str!("../assets/themes/index.js");
+pub const RESET_CSS: &str = include_str!("../assets/themes/reset.css");
+
+pub fn first_post_md(date: &str) -> String {
+    format!(
+        "---\ntitle: \"First Post\"\ndate: \"{}\"\n---\n\nHello friend.\n\n## Section\n\n- item one\n- item two\n",
+        date
+    )
+}
 
 pub fn create_site_directory(root_path: &Path) -> Result<Project> {
     fs::create_dir_all(root_path)?;
@@ -144,7 +162,11 @@ fn build_site_inner(project: &Project, silent: bool) -> Result<()> {
     let index_html = project.out_dir.join("index.html");
     let yaml_config_path = {
         let p = project.root.join("kuro.yaml");
-        if p.exists() { p } else { project.root.join("kuro.yml") }
+        if p.exists() {
+            p
+        } else {
+            project.root.join("kuro.yml")
+        }
     };
 
     let yaml_config = fs::read_to_string(yaml_config_path)?;
