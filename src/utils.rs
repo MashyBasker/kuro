@@ -5,27 +5,27 @@ use std::{fs, path::Path};
 use crate::types::{Config, Frontmatter, PostMeta, Templates};
 
 pub fn show_help() {
-    println!("\nkuro {}", env!("CARGO_PKG_VERSION"));
+    println!("\n kuro {}", env!("CARGO_PKG_VERSION"));
     println!();
-    println!("USAGE:");
-    println!("    kuro <COMMAND> [OPTIONS]");
+    println!(" USAGE:");
+    println!("     kuro <COMMAND> [OPTIONS]");
     println!();
-    println!("COMMANDS:");
-    println!("    init [PATH]       Create a new site (default: current directory)");
-    println!("    build [PATH]      Build the site (default: current directory)");
-    println!("    serve [PATH]      Serve the site locally (default: current directory)");
-    println!("    new <NAME>        Create a new page");
+    println!(" COMMANDS:");
+    println!("     init [PATH]       Create a new site (default: current directory)");
+    println!("     build [PATH]      Build the site (default: current directory)");
+    println!("     serve [PATH]      Serve the site locally (default: current directory)");
+    println!("     new <NAME>        Create a new page");
     println!();
-    println!("OPTIONS:");
-    println!("    --post            Create as a blog post (used with `new`)");
-    println!("    -h, --help        Print this help message");
+    println!(" OPTIONS:");
+    println!("     --post            Create as a blog post (used with `new`)");
+    println!("     -h, --help        Print this help message");
     println!();
-    println!("EXAMPLES:");
-    println!("    kuro init                  Create a new site in the current directory");
-    println!("    kuro init my-site          Create a new site in ./my-site");
-    println!("    kuro build                 Build the site");
-    println!("    kuro new about             Create a new page called 'about'");
-    println!("    kuro new my-post --post    Create a new blog post\n");
+    println!(" EXAMPLES:");
+    println!("     kuro init                  Create a new site in the current directory");
+    println!("     kuro init my-site          Create a new site in ./my-site");
+    println!("     kuro build                 Build the site");
+    println!("     kuro new about             Create a new page called 'about'");
+    println!("     kuro new my-post --post    Create a new blog post\n");
 }
 
 pub fn copy_dir(src: &Path, dest: &Path) -> Result<()> {
