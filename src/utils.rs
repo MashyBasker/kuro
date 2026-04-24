@@ -1,3 +1,4 @@
+use crate::core::CARD_HTML;
 use anyhow::Result;
 use gray_matter::{Matter, Pod, engine::YAML};
 use std::{fs, path::Path};
@@ -101,7 +102,11 @@ pub fn get_site_path(yaml_config: &str) -> String {
         .join("\n")
 }
 
-pub fn render_page(input: &str, templates: &Templates, yaml_config: &str) -> anyhow::Result<String> {
+pub fn render_page(
+    input: &str,
+    templates: &Templates,
+    yaml_config: &str,
+) -> anyhow::Result<String> {
     let (fm, content) = crate::utils::parse_content(input)?;
 
     let html_content = md_to_html(&content);
@@ -128,7 +133,11 @@ pub fn render_page(input: &str, templates: &Templates, yaml_config: &str) -> any
     Ok(full)
 }
 
-pub fn render_writings(posts: &[PostMeta], templates: &Templates, yaml_config: &str) -> anyhow::Result<String> {
+pub fn render_writings(
+    posts: &[PostMeta],
+    templates: &Templates,
+    yaml_config: &str,
+) -> anyhow::Result<String> {
     let items: String = posts
         .iter()
         .map(|p| {
@@ -137,7 +146,7 @@ pub fn render_writings(posts: &[PostMeta], templates: &Templates, yaml_config: &
                 .as_deref()
                 .map(|d| format!("\n      <span class=\"post-card-date\">{}</span>", d))
                 .unwrap_or_default();
-            crate::scaffold::CARD_HTML
+            CARD_HTML
                 .replace("{url}", &p.url)
                 .replace("{title}", &p.title)
                 .replace("{date}", &date)
@@ -163,7 +172,11 @@ pub fn render_writings(posts: &[PostMeta], templates: &Templates, yaml_config: &
     Ok(full)
 }
 
-pub fn render_post(input: &str, templates: &Templates, yaml_config: &str) -> anyhow::Result<String> {
+pub fn render_post(
+    input: &str,
+    templates: &Templates,
+    yaml_config: &str,
+) -> anyhow::Result<String> {
     let (fm, content) = crate::utils::parse_content(input)?;
 
     let html_content = md_to_html(&content);

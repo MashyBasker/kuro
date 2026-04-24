@@ -4,7 +4,6 @@ use crate::{cli::Commands, types::Project};
 
 mod cli;
 mod core;
-mod scaffold;
 mod types;
 mod utils;
 
