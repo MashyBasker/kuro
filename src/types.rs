@@ -1,18 +1,6 @@
 use anyhow::Result;
 use serde::Deserialize;
-use std::{
-    fs,
-    path::{Path, PathBuf},
-};
-
-#[derive(Debug, PartialEq, Clone)]
-pub struct Project {
-    pub root: PathBuf,
-    pub source_dir: PathBuf,
-    pub out_dir: PathBuf,
-    pub assets_dir: PathBuf,
-    pub template_dir: PathBuf,
-}
+use std::{fs, path::Path};
 
 pub struct Templates {
     pub base: String,
@@ -21,18 +9,6 @@ pub struct Templates {
     pub page: String,
     pub post: String,
     pub writings: String,
-}
-
-impl Project {
-    pub fn new(root: PathBuf) -> Self {
-        Self {
-            source_dir: root.join("content"),
-            out_dir: root.join("dist"),
-            assets_dir: root.join("static"),
-            template_dir: root.join("templates"),
-            root,
-        }
-    }
 }
 
 impl Templates {
