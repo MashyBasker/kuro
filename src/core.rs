@@ -15,7 +15,7 @@ use tiny_http::{Header, Response, Server};
 use crate::{
     render::SiteRenderer,
     types::{PostMeta, Templates},
-    utils::{build_header_html, copy_dir, parse_content},
+    utils::{copy_dir, parse_content},
 };
 
 pub const DEFAULT_KURO_YAML: &str = include_str!("../assets/templates/kuro.yml");
@@ -146,11 +146,11 @@ impl Project {
         fs::write(self.out_dir.join("reset.css"), RESET_CSS)?;
         fs::write(self.out_dir.join("index.js"), INDEX_JS)?;
 
-        let mut templates = Templates::load(&self.root)?;
+        let templates = Templates::load(&self.root)?;
 
         println!("\n  ✓ Loaded templates");
 
-        // Scan non-index pages in content/ to build the navbar
+        // Scan non-index pages in content/ to build page files
         let mut page_entries: Vec<_> = fs::read_dir(&self.source_dir)?
             .filter_map(|e| e.ok())
             .filter(|e| {
@@ -160,23 +160,6 @@ impl Project {
             })
             .collect();
         page_entries.sort_by_key(|e| e.file_name());
-
-        let extra_pages: Vec<(String, String)> = page_entries
-            .iter()
-            .map(|e| {
-                let path = e.path();
-                let name = path.file_stem().unwrap().to_str().unwrap().to_string();
-                let content = fs::read_to_string(&path).unwrap_or_default();
-                let title = parse_content(&content)
-                    .ok()
-                    .and_then(|(fm, _)| fm)
-                    .map(|f| f.title)
-                    .unwrap_or_else(|| name.clone());
-                (title, format!("/{}/", name))
-            })
-            .collect();
-
-        templates.header = build_header_html(&extra_pages);
 
         let index_md = self.source_dir.join("index.md");
         let index_html = self.out_dir.join("index.html");

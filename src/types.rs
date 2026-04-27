@@ -54,7 +54,7 @@ pub struct SitePaths {
 #[derive(Debug, Deserialize)]
 pub struct Config {
     #[serde(default)]
-    pub footer_links: Vec<FooterLink>,
+    pub socials: Vec<FooterLink>,
     #[serde(default)]
-    pub site_paths: Vec<SitePaths>,
+    pub pages: Vec<SitePaths>,
 }

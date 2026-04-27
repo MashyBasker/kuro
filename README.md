@@ -85,11 +85,13 @@ author: "Your name"
 description: "New Kuro Website"
 url: "http://localhost:3000"
 
-footer_links:
+# the links will be displayed in the footer
+socials:
     - label: github
       url: https://github.com/<profile>
 
-site_paths:
+# the links will be displayed in the nav bar
+pages:
     - label: about
       path: /about
 ```

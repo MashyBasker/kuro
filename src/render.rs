@@ -17,14 +17,14 @@ impl SiteRenderer {
         let config: Config = serde_yaml::from_str(yaml_config)?;
 
         let footer_links = config
-            .footer_links
+            .socials
             .iter()
             .map(|l| format!("<a href=\"{}\">{}</a>", l.url, l.label))
             .collect::<Vec<_>>()
             .join("\t");
 
         let nav_bar = config
-            .site_paths
+            .pages
             .iter()
             .map(|sp| format!("<a href=\"{}\">{}</a>", sp.path, sp.label))
             .collect::<Vec<_>>()
