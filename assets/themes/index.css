@@ -2,11 +2,11 @@
  * By Oskar Wickström
  * Licensed under the MIT License (https://github.com/owickstrom/the-monospace-web/blob/main/LICENSE.md)
  **/
-@import url('https://fonts.cdnfonts.com/css/jetbrains-mono-2');
+@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:ital,wght@0,400;0,700;1,400&display=swap');
 
 :root {
-  --font-family: "JetBrains Mono", monospace;
-  --line-height: 1.20rem;
+  --font-family: Georgia, serif;
+  --line-height: 1.50rem;
   --border-thickness: 2px;
   --text-color: #000;
   --text-color-alt: #666;
@@ -135,8 +135,8 @@ sub {
   display: inline-block;
   margin: 0;
   vertical-align: sub;
-  line-height: 0;
-  width: calc(1ch / 0.75);
+  line-height: var(--line-height);
+  width: max-content;
   font-size: .75rem;
 }
 
@@ -239,7 +239,7 @@ figure pre {
 }
 
 pre, code {
-  font-family: var(--font-family);
+  font-family: "JetBrains Mono", monospace;
 }
 
 code {

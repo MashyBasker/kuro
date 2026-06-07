@@ -54,6 +54,8 @@ pub fn md_to_html(input: &str) -> String {
     options.extension.strikethrough = true;
     options.extension.tasklist = true;
     options.extension.footnotes = true;
+    options.extension.subtext = true;
+    options.extension.subscript = true;
 
     options.parse.smart = true;
 
