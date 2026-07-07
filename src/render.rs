@@ -3,7 +3,7 @@ use anyhow::Result;
 use crate::{
     core::CARD_HTML,
     types::{Config, PostMeta, Templates},
-    utils::{md_to_html, parse_content},
+    utils::{format_card_date, md_to_html, parse_content},
 };
 
 pub struct SiteRenderer {
@@ -82,7 +82,7 @@ impl SiteRenderer {
                 let date = p
                     .date
                     .as_deref()
-                    .map(|d| format!("\n      <span class=\"post-card-date\">{}</span>", d))
+                    .map(|d| format!("\n      <span class=\"post-card-date\">{}</span>", format_card_date(d)))
                     .unwrap_or_default();
                 CARD_HTML
                     .replace("{url}", &p.url)

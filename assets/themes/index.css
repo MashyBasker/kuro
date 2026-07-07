@@ -2,21 +2,23 @@
  * By Oskar Wickström
  * Licensed under the MIT License (https://github.com/owickstrom/the-monospace-web/blob/main/LICENSE.md)
  **/
-@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:ital,wght@0,400;0,700;1,400&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:ital,wght@0,400;0,500;0,700;1,400&family=Open+Sans:ital,wght@0,400;0,600;0,700;1,400&display=swap');
 
 :root {
-  --font-family: Georgia, serif;
+  --font-family: "IBM Plex Mono", monospace;
+  --body-font-family: "Open Sans", sans-serif;
   --line-height: 1.50rem;
   --border-thickness: 2px;
-  --text-color: #000;
-  --text-color-alt: #666;
-  --background-color: #fff;
-  --background-color-alt: #eee;
-  --background-color-code: #d4d4d4;
+  --text-color: #C8D8DA;
+  --text-color-alt: #6F7E80;
+  --background-color: #0B0F14;
+  --background-color-alt: #0F1A1D;
+  --background-color-code: #0F1A1D;
+  --accent-color: #48D597;
 
-  --font-weight-normal: 500;
-  --font-weight-medium: 600;
-  --font-weight-bold: 800;
+  --font-weight-normal: 400;
+  --font-weight-medium: 500;
+  --font-weight-bold: 700;
 
   font-family: var(--font-family);
   font-optical-sizing: auto;
@@ -26,13 +28,14 @@
   font-size: 16px;
 }
 
-@media (prefers-color-scheme: dark) {
+@media (prefers-color-scheme: light) {
   :root {
-    --text-color: #fff;
-    --text-color-alt: #aaa;
-    --background-color: #000;
-    --background-color-alt: #111;
-    --background-color-code: #2a2a2a;
+    --text-color: #080F11;
+    --text-color-alt: #4A5E62;
+    --background-color: #F5F8F8;
+    --background-color-alt: #E8EEEF;
+    --background-color-code: #DFE9EA;
+    --accent-color: #1B7A52;
   }
 }
 
@@ -76,9 +79,11 @@ body {
 }
 
 h1, h2, h3, h4, h5, h6 {
+  font-family: var(--body-font-family);
   font-weight: var(--font-weight-bold);
   margin: calc(var(--line-height) * 2) 0 var(--line-height);
   line-height: var(--line-height);
+  color: var(--text-color);
 }
 
 h1 {
@@ -116,7 +121,23 @@ a {
 }
 
 a:link, a:visited {
+  color: var(--accent-color);
+}
+
+nav a {
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+nav a:link, nav a:visited {
+  color: var(--text-color-alt);
+  text-decoration: none;
+}
+nav a:hover {
   color: var(--text-color);
+}
+nav a.active:link, nav a.active:visited {
+  color: var(--text-color);
+  text-decoration: none;
 }
 
 p {
@@ -149,8 +170,9 @@ table {
 }
 
 th, td {
-  border: var(--border-thickness) solid var(--text-color);
-  padding: 
+  font-family: var(--body-font-family);
+  border: 1px solid color-mix(in srgb, var(--text-color) 25%, transparent);
+  padding:
     calc((var(--line-height) / 2))
     calc(1ch - var(--border-thickness) / 2)
     calc((var(--line-height) / 2) - (var(--border-thickness)))
@@ -158,6 +180,10 @@ th, td {
   line-height: var(--line-height);
   vertical-align: top;
   text-align: left;
+}
+
+th code, td code {
+  font-family: var(--font-family);
 }
 table tbody tr:first-child > * {
   padding-top: calc((var(--line-height) / 2) - var(--border-thickness));
@@ -182,6 +208,11 @@ th {
 }
 .header tr td:last-child {
   text-align: right;
+}
+
+p, li, blockquote, dt, dd, figcaption, details, summary, .post-card-title {
+  font-family: var(--body-font-family);
+  font-size: 1.0625rem;
 }
 
 p {
@@ -233,13 +264,20 @@ pre {
   overflow-x: auto;
   margin: var(--line-height) 0;
   overflow-y: hidden;
+  font-size: 0.85rem;
+  border: 1px solid color-mix(in srgb, var(--text-color) 20%, transparent);
+  border-radius: 4px;
 }
 figure pre {
   margin: 0;
 }
 
 pre, code {
-  font-family: "JetBrains Mono", monospace;
+  font-family: var(--font-family);
+}
+
+pre code.hljs {
+  background: var(--background-color);
 }
 
 code {
@@ -247,6 +285,7 @@ code {
 }
 
 :not(pre) > code {
+  font-size: 0.8em;
   background: var(--background-color-code);
   padding: 0.1em 0.5ch;
   border-radius: 2px;
@@ -449,6 +488,69 @@ label input {
 .grid:has(> :last-child:nth-child(7)) { --grid-cells: 7; }
 .grid:has(> :last-child:nth-child(8)) { --grid-cells: 8; }
 .grid:has(> :last-child:nth-child(9)) { --grid-cells: 9; }
+
+/* BLOCKQUOTE / NOTE */
+
+blockquote {
+  border: 1px solid color-mix(in srgb, var(--accent-color) 40%, transparent);
+  border-radius: 4px;
+  background: color-mix(in srgb, var(--accent-color) 6%, var(--background-color));
+  padding: calc(var(--line-height) * 0.75) 1.5ch;
+  margin: calc(var(--line-height) * 0.5) 0;
+}
+
+blockquote::before {
+  content: "NOTE";
+  display: block;
+  font-family: var(--font-family);
+  font-weight: var(--font-weight-bold);
+  font-size: 0.875rem;
+  color: var(--accent-color);
+  margin-bottom: calc(var(--line-height) / 8);
+}
+
+blockquote p:last-child {
+  margin-bottom: 0;
+}
+
+/* POST CARDS */
+
+.post-cards {
+  display: flex;
+  flex-direction: column;
+  margin: 0;
+  padding: 0;
+}
+
+.post-card {
+  display: flex;
+  flex-direction: column;
+  gap: calc(var(--line-height) / 4);
+  padding: calc(var(--line-height) * 0.75) 1ch;
+  text-decoration: none;
+  margin: 0 -1ch;
+}
+
+.post-card:hover {
+  background: var(--background-color-alt);
+}
+
+.post-card-title {
+  font-weight: var(--font-weight-bold);
+  margin: 0;
+  color: var(--text-color);
+}
+
+.post-card-date {
+  color: var(--text-color-alt);
+  margin: 0;
+  font-size: 0.8rem;
+  letter-spacing: 0.05em;
+}
+
+.post-card-date::before {
+  content: "└─ ";
+}
 
 /* DEBUG UTILITIES */
 

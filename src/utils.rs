@@ -56,10 +56,22 @@ pub fn md_to_html(input: &str) -> String {
     options.extension.footnotes = true;
     options.extension.subtext = true;
     options.extension.subscript = true;
-
     options.parse.smart = true;
 
     markdown_to_html(input, &options)
+}
+
+pub fn format_card_date(date: &str) -> String {
+    const MONTHS: [&str; 12] = ["JAN","FEB","MAR","APR","MAY","JUN","JUL","AUG","SEP","OCT","NOV","DEC"];
+    let parts: Vec<&str> = date.split('-').collect();
+    if let [year, month, day] = parts.as_slice() {
+        if let (Ok(m), Ok(d)) = (month.parse::<usize>(), day.parse::<u32>()) {
+            if m >= 1 && m <= 12 {
+                return format!("{} {} {}", d, MONTHS[m - 1], year);
+            }
+        }
+    }
+    date.to_string()
 }
 
 pub fn parse_content(input: &str) -> Result<(Option<Frontmatter>, String)> {
